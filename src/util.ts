@@ -1,7 +1,9 @@
-import {Response} from "express-serve-static-core";
+import {Request, Response} from "express-serve-static-core";
 import {html_text} from "./email_text";
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
+import {config} from './config';
+import jwt from 'jsonwebtoken'
 
 const dotenv = require('dotenv').config({path: '.' + '/.env'});
 
@@ -18,19 +20,8 @@ function inputValidate(input: string, type: InputType) {
 }
 
 export async function check_password(user: any, res: Response, password: string) {
-    if (!user) {
-        return res.status(200).json({
-            result: false,
-            Error: 'Cannot find user in our data base'
-        });
-    }
-
     try {
-        if (await bcrypt.compare(password, user.password)) {
-            return true;
-        } else {
-            return res.status(200).json({result: false, Error: 'Incorrect password'})
-        }
+        return await bcrypt.compare(password, user.password);
     } catch (err) {
         console.log(err);
         res.status(200).json({result: false, Error: err.message});
@@ -55,7 +46,6 @@ export function send_password(email: string, res: Response, new_password: string
         text: 'This is your new password for account ' + new_password,
         html: html_text(new_password)
     };
-    // console.log(html_text())
 
     transporter.sendMail(mailOptions, (error: Error | null, info: any) => {
         if (error) {
@@ -70,14 +60,64 @@ export function send_password(email: string, res: Response, new_password: string
     });
 }
 
-export function validate_email(email: string, res: Response) {
+export function validate_email(req: Request, res: Response, next: Function) {
+    const {email} = req.body;
+
     if (!inputValidate(email, "email")) {
         return res.json({result: false, Error: 'Invalid email'})
+    } else {
+        next();
     }
 }
 
-export function validate_password(password: string, res: Response) {
+export function validate_password(req: Request, res: Response, next: Function) {
+    const {password} = req.body;
+
     if (!inputValidate(password, "password")) {
         return res.json({result: false, Error: 'Invalid password'})
+    } else {
+        next();
     }
 }
+
+
+export function check_token(req: any, res: Response, next: Function) {
+    let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
+
+    if (!token) {
+        return;
+    }
+
+    if (token.startsWith('Bearer ')) {
+        token = token.slice(7, token.length);
+    }
+
+    if (token) {
+        jwt.verify(token, config.secret, (err: Error, decoded: any) => {
+            if (err) {
+                return res.json({
+                    success: false,
+                    message: 'Token is not valid'
+                });
+            } else {
+                req.decoded = decoded;
+                next();
+            }
+        });
+    } else {
+        return res.json({
+            success: false,
+            message: 'Auth token is not supplied'
+        });
+    }
+}
+
+export function create_token(email: string) {
+    return jwt.sign({email},
+        config.secret,
+        {
+            expiresIn: '24h' // expires in 24 hours
+        }
+    );
+}
+
