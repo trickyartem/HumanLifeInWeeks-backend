@@ -17,6 +17,26 @@ const subSchema = new mongoose.Schema({
     password: {
         type: String,
         required: true
+    },
+
+    title: {
+        type: String,
+        required: false
+    },
+
+    timestamp: {
+        type: String,
+        required: false
+    },
+
+    description: {
+        type: String,
+        required: false
+    },
+
+    id: {
+        type: String,
+        required: false
     }
 });
 

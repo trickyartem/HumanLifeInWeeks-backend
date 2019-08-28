@@ -34,7 +34,8 @@ app.post('/auth/register', validate_email, validate_password, (req: Request, res
                         const token = create_token(email);
                         return res.status(200).json({
                             result: true,
-                            status: `You have been registered ${token}`
+                            status: `You have been registered`,
+                            token
                         })
                     })
                     .catch((err: Error) =>
@@ -142,6 +143,46 @@ app.post('/auth/removeUser', check_token, validate_email, validate_password, (re
         }
     }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
 });
+
+app.post('/addEvent', check_token, ((req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    const {email, title, timestamp, id, description} = req.body;
+
+    const data = {title, timestamp, id, description};
+    model.findOneAndUpdate({email}, data, { useFindAndModify: false }, ((err: Error, doc: any) => {
+        if (err) res.status(200).json({result: false, Error: err.message})
+    })).then((response: Object | null) => {
+        if (response == null) {
+            return res.status(200).json({
+                result: false,
+                Error: 'There is no users with this email in out data base'
+            })
+        } else {
+            return res.status(200).json({
+                result: true,
+                status: 'Your data has successfully have been added to data base'
+            })
+        }
+    }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
+}));
+
+app.post('/removeEvent', check_token, ((req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+}));
+
+app.post('/getEvents', check_token, ((req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+
+}));
+
+app.post('/test', ((req: Request, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    const {email} = req.body;
+
+    model.findOne({email}, (err: Error, docs: any) => {
+        console.log(docs);
+    })
+}))
 
 app.listen(PORT, () => {
     console.log(`Listening on localhost:${PORT}`)
