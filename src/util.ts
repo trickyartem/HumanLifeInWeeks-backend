@@ -1,5 +1,5 @@
 import {Request, Response} from "express-serve-static-core";
-import {html_text} from "./email_text";
+import {html_text} from "./messages";
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import {config} from './config';
@@ -82,33 +82,36 @@ export function validate_password(req: Request, res: Response, next: Function) {
 
 
 export function check_token(req: any, res: Response, next: Function) {
+    const {email} = req.body;
+
     let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
 
-    if (!token) {
-        return;
-    }
-
-    if (token.startsWith('Bearer ')) {
-        token = token.slice(7, token.length);
-    }
-
-    if (token) {
-        jwt.verify(token, config.secret, (err: Error, decoded: any) => {
-            if (err) {
-                return res.json({
-                    success: false,
-                    message: 'Token is not valid'
-                });
-            } else {
-                req.decoded = decoded;
-                next();
-            }
-        });
+    if (token === undefined) {
+        next();
     } else {
-        return res.json({
-            success: false,
-            message: 'Auth token is not supplied'
-        });
+        if (token.startsWith('Bearer ')) {
+            token = token.slice(7, token.length);
+        }
+
+        if (token) {
+            jwt.verify(token, config.secret, (err: Error, decoded: any) => {
+                if (err) {
+                    return res.json({
+                        result: false,
+                        message: 'Token is not valid',
+                        token: create_token(email)
+                    });
+                } else {
+                    req.decoded = decoded;
+                    next();
+                }
+            });
+        } else {
+            return res.json({
+                result: false,
+                message: 'Auth token is not supplied'
+            });
+        }
     }
 }
 
@@ -119,5 +122,20 @@ export function create_token(email: string) {
             expiresIn: '24h' // expires in 24 hours
         }
     );
+}
+
+export function check_user_send_res(user: any, res: Response, error_msg: string, success_msg: string, id: string | undefined) {
+    if (user === null) {
+        return res.status(200).json({
+            result: false,
+            Error: error_msg
+        })
+    } else {
+        return res.status(200).json({
+            result: true,
+            status: success_msg,
+            id: id
+        })
+    }
 }
 

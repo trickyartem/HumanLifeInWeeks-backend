@@ -1,5 +1,22 @@
 import {Request, Response} from "express-serve-static-core";
-import {check_password, send_password, validate_email, validate_password, check_token, create_token} from "./util";
+import {
+    check_password,
+    send_password,
+    validate_email,
+    validate_password,
+    check_token,
+    create_token,
+    check_user_send_res
+} from "./util";
+import {
+    existed_email,
+    no_match_users,
+    registered,
+    submitted,
+    wrong_pass,
+    removed,
+    added
+} from "./messages";
 import express from 'express';
 import bcrypt from 'bcrypt';
 import Bodyparser from 'body-parser';
@@ -26,35 +43,35 @@ app.post('/auth/register', validate_email, validate_password, (req: Request, res
 
     model.findOne({email}, (err: Error) => {
         if (err) return res.status(200).json({result: false, Error: err.message})
-    })
-        .then((response: Array<any>) => {
-            if (response === null) {
-                return users.save()
-                    .then((respon: Array<any>) => {
-                        const token = create_token(email);
-                        return res.status(200).json({
-                            result: true,
-                            status: `You have been registered`,
-                            token
-                        })
+    }).then((response: any) => {
+        if (response === null) {
+            return users.save()
+                .then((respon: Array<any>) => {
+                    console.log(respon)
+                    const token = create_token(email);
+                    return res.status(200).json({
+                        result: true,
+                        status: registered,
+                        token
                     })
-                    .catch((err: Error) =>
-                        res.status(200).json({result: false, Error: err.message}))
-            } else {
-                return res.status(200).json({
-                    status: false,
-                    Error: 'We already have user with this email in our data base'
                 })
-            }
-        }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}));
+                .catch((err: Error) =>
+                    res.status(200).json({result: false, Error: err.message}))
+        } else {
+            return res.status(200).json({
+                status: false,
+                Error: existed_email
+            })
+        }
+    }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}));
 });
 
-app.post('/auth/login', check_token, validate_email, validate_password, (req: Request, res: Response) => {
+app.post('/auth/login', validate_email, validate_password, check_token, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
     const {email, password} = req.body;
 
-    let token: string | string[] | undefined = 'hi';
-    if (!(req.headers['x-access-token'] || req.headers['authorization'])) {
+    let token = req.headers['x-access-token'] || req.headers['authorization'];
+    if (token === undefined) {
         token = create_token(email);
     } else {
         token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -63,21 +80,21 @@ app.post('/auth/login', check_token, validate_email, validate_password, (req: Re
     model.findOne({email}, (err: Error, docs: Array<any>) => {
         if (err) return res.status(200).json({result: false, Error: err.message})
     })
-        .then(async (response: Array<any>) => {
+        .then(async (response: any) => {
             if (response === null) {
                 return res.status(200).json({
                     result: false,
-                    Error: 'There is no users with this email in out data base'
+                    Error: no_match_users
                 })
             }
             try {
                 if (await check_password(response, res, password)) {
                     return res.status(200).json({
                         result: true,
-                        data: {name: email, status: 'You successfully have been submitted', token}
+                        data: {name: email, status: submitted, token}
                     });
                 } else {
-                    return res.status(200).json({result: false, Error: 'Incorrect password'})
+                    return res.status(200).json({result: false, Error: wrong_pass})
                 }
             } catch (err) {
                 return res.status(200).json({result: false, Error: err.message})
@@ -86,18 +103,18 @@ app.post('/auth/login', check_token, validate_email, validate_password, (req: Re
         .catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
 });
 
-app.post('/auth/resetPassword', validate_email, (req: Request, res: Response) => {
+app.post('/auth/reset-password', validate_email, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
     const {email} = req.body;
 
-    model.findOne({email}, (err: Error, docs: any[]) => {
+    model.findOneAndUpdate({email}, (err: Error, docs: any[]) => {
         if (err) return res.status(200).json({result: false, Error: err.message})
     })
-        .then((response: Array<Object>) => {
+        .then((response: any) => {
             if (response === null) {
                 return res.status(200).json({
                     result: false,
-                    Error: 'We do not have this email in our data base'
+                    Error: no_match_users
                 })
             } else {
                 const new_password = gen_password.generate({
@@ -119,70 +136,78 @@ app.post('/auth/resetPassword', validate_email, (req: Request, res: Response) =>
         .catch((err: Error) => res.status(200).json({result: false, Error: err.message}));
 });
 
-app.post('/auth/removeUser', check_token, validate_email, validate_password, (req: Request, res: Response) => {
+app.post('/auth/remove-user', check_token, validate_email, validate_password, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
     const {email} = req.body;
 
     model.findOne({email}, (err: Error, docs: Array<Object>) => {
         if (err) return res.status(200).json({result: false, Error: err.message})
-    }).then((response: Array<Object>) => {
+    }).then((response: any) => {
         if (response === null) {
             return res.status(200).json({
                 result: false,
-                Error: 'There is no users with this email in out data base'
+                Error: no_match_users
             })
         } else {
             model.deleteOne({email}, (err: Error) => {
                 if (err) res.status(200).json({result: false, Error: err.message})
-            }).then((response: Response) => {
+            }).then((response: any) => {
                 return res.status(200).json({
                     result: true,
-                    status: 'You successfully have been removed from our data base'
+                    status: removed
                 })
             })
         }
     }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
 });
 
-app.post('/addEvent', check_token, ((req: Request, res: Response) => {
+app.post('/add-event', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
-    const {email, title, timestamp, id, description} = req.body;
+    const {email, title, timestamp, description} = req.body;
+    const events = {title, timestamp, description};
 
-    const data = {title, timestamp, id, description};
-    model.findOneAndUpdate({email}, data, { useFindAndModify: false }, ((err: Error, doc: any) => {
-        if (err) res.status(200).json({result: false, Error: err.message})
-    })).then((response: Object | null) => {
-        if (response == null) {
-            return res.status(200).json({
-                result: false,
-                Error: 'There is no users with this email in out data base'
-            })
-        } else {
-            return res.status(200).json({
-                result: true,
-                status: 'Your data has successfully have been added to data base'
-            })
-        }
-    }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
+    model.findOneAndUpdate({email},
+        {$push: {events}},
+        (err: Error, docs: any) => {
+            if (err) return res.status(200).json({result: false, Error: err.message})
+        }).then((user: any) => {
+        const last_event = user.events.length - 1;
+        check_user_send_res(user, res, no_match_users, added, user.events[last_event]._id);
+    })
 }));
 
-app.post('/removeEvent', check_token, ((req: Request, res: Response) => {
+app.post('/remove-event', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    const {id} = req.body;
+
+    model.findOneAndUpdate({"events._id": {$in: id}}, {$pull: {events: {_id: id}}}, (err: Error, docs: any) => {
+        if (err) return res.status(200).json({result: false, Error: err.message});
+        res.status(200).json({result: true, data: removed});
+    })
 }));
 
-app.post('/getEvents', check_token, ((req: Request, res: Response) => {
+app.post('/get-events', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
 
-}));
-
-app.post('/test', ((req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
     const {email} = req.body;
 
     model.findOne({email}, (err: Error, docs: any) => {
-        console.log(docs);
+        if (err) return res.status(200).json({result: false, Error: err.message});
+    }).then((user: any) => {
+        if (user !== null)
+            res.status(200).json({result: true, events: user.events})
     })
-}))
+}));
+
+// app.post('/get-users', (req: Request, res: Response) => {
+//     res.setHeader('Content-Type', 'application/json');
+//     const {email, title, timestamp, id, description} = req.body;
+//
+//     model.find({}, (err: Error, docs: Array<Object>) => {
+//         res.status(200).json({data: docs});
+//         // check_user_send_res(docs, res, no_match_users, added, '')
+//     })
+// });
 
 app.listen(PORT, () => {
     console.log(`Listening on localhost:${PORT}`)
