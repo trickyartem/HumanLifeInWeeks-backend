@@ -107,7 +107,7 @@ app.post('/auth/reset-password', validate_email, (req: Request, res: Response) =
     res.setHeader('Content-Type', 'application/json');
     const {email} = req.body;
 
-    model.findOneAndUpdate({email}, (err: Error, docs: any[]) => {
+    model.findOne({email}, (err: Error, docs: any[]) => {
         if (err) return res.status(200).json({result: false, Error: err.message})
     })
         .then((response: any) => {

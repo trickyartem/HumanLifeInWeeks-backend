@@ -14,6 +14,6 @@ Copy and paste this command
 Ubuntu: 
 ``` 
 npm install
-sudo service mongod start
+npm run mongo
 npm start
 ```
