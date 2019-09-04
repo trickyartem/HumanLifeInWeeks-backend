@@ -22,12 +22,42 @@ import bcrypt from 'bcrypt';
 import Bodyparser from 'body-parser';
 import gen_password from 'generate-password';
 import {model} from "./data_base";
+import jwt from "jsonwebtoken";
+import {config} from "./config";
 
 const PORT = 3000;
 const app = express();
 
 app.use(Bodyparser.json());
 app.use(Bodyparser.urlencoded({extended: true}));
+
+app.post('/auth/me', (req: any, res: Response) => {
+    res.setHeader('Content-Type', 'application/json');
+    let token = req.headers['x-access-token'] || req.headers['authorization'];
+
+    if (token) {
+        jwt.verify(token, config.secret, (err: Error, decoded: any) => {
+            if (err) {
+                return res.json({
+                    result: false,
+                    message: 'Token is not valid',
+                    token: undefined
+                });
+            } else {
+                return res.json({
+                    result: true,
+                    message: 'Token is valid',
+                    token
+                })
+            }
+        })
+    } else {
+        return res.json({
+            result: false,
+            message: 'Token in not supplied'
+        })
+    }
+});
 
 app.post('/auth/register', validate_email, validate_password, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
@@ -47,7 +77,6 @@ app.post('/auth/register', validate_email, validate_password, (req: Request, res
         if (response === null) {
             return users.save()
                 .then((respon: Array<any>) => {
-                    console.log(respon)
                     const token = create_token(email);
                     return res.status(200).json({
                         result: true,
@@ -156,7 +185,7 @@ app.post('/auth/remove-user', check_token, validate_email, validate_password, (r
                     result: true,
                     status: removed
                 })
-            })
+            }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
         }
     }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
 });
@@ -173,7 +202,7 @@ app.post('/add-event', check_token, ((req: Request, res: Response) => {
         }).then((user: any) => {
         const last_event = user.events.length - 1;
         check_user_send_res(user, res, no_match_users, added, user.events[last_event]._id);
-    })
+    }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}))
 }));
 
 app.post('/remove-event', check_token, ((req: Request, res: Response) => {
@@ -188,27 +217,17 @@ app.post('/remove-event', check_token, ((req: Request, res: Response) => {
 
 app.post('/get-events', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
-
     const {email} = req.body;
 
     model.findOne({email}, (err: Error, docs: any) => {
         if (err) return res.status(200).json({result: false, Error: err.message});
     }).then((user: any) => {
-        if (user !== null)
+        if (user !== null) {
             res.status(200).json({result: true, events: user.events})
+        }
     })
 }));
 
-// app.post('/get-users', (req: Request, res: Response) => {
-//     res.setHeader('Content-Type', 'application/json');
-//     const {email, title, timestamp, id, description} = req.body;
-//
-//     model.find({}, (err: Error, docs: Array<Object>) => {
-//         res.status(200).json({data: docs});
-//         // check_user_send_res(docs, res, no_match_users, added, '')
-//     })
-// });
-
 app.listen(PORT, () => {
-    console.log(`Listening on localhost:${PORT}`)
+console.log(`Listening on localhost:${PORT}`)
 });

@@ -80,10 +80,7 @@ export function validate_password(req: Request, res: Response, next: Function) {
     }
 }
 
-
 export function check_token(req: any, res: Response, next: Function) {
-    const {email} = req.body;
-
     let token = req.headers['x-access-token'] || req.headers['authorization']; // Express headers are auto converted to lowercase
 
     if (token === undefined) {
@@ -99,7 +96,6 @@ export function check_token(req: any, res: Response, next: Function) {
                     return res.json({
                         result: false,
                         message: 'Token is not valid',
-                        token: create_token(email)
                     });
                 } else {
                     req.decoded = decoded;
@@ -119,7 +115,7 @@ export function create_token(email: string) {
     return jwt.sign({email},
         config.secret,
         {
-            expiresIn: '24h' // expires in 24 hours
+            expiresIn: '30d'
         }
     );
 }
@@ -138,4 +134,3 @@ export function check_user_send_res(user: any, res: Response, error_msg: string,
         })
     }
 }
-
