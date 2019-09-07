@@ -28,13 +28,23 @@ import {config} from "./config";
 const PORT = 3000;
 const app = express();
 
+
+
 app.use(Bodyparser.json());
 app.use(Bodyparser.urlencoded({extended: true}));
+app.use((req: any, res: any, next: any) => {
+    res.set({
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Headers': '*'
+      })
+    next();
+});
 
 app.post('/auth/me', (req: any, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
     let token = req.headers['x-access-token'] || req.headers['authorization'];
+
+    if (!token) return res.json({result: false});
 
     if (token.startsWith('Bearer ')) {
         token = token.slice(7, token.length);
@@ -65,8 +75,6 @@ app.post('/auth/me', (req: any, res: Response) => {
 });
 
 app.post('/auth/register', validate_email, validate_password, (req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
 
     const {email, password} = req.body;
 
@@ -102,18 +110,11 @@ app.post('/auth/register', validate_email, validate_password, (req: Request, res
     }).catch((err: Error) => res.status(200).json({result: false, Error: err.message}));
 });
 
-app.post('/auth/login', validate_email, validate_password, check_token, (req: Request, res: Response) => {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Origin', '*');
+app.post('/auth/login', validate_email, validate_password, (req: Request, res: Response) => {
 
     const {email, password} = req.body;
-
-    let token = req.headers['x-access-token'] || req.headers['authorization'];
-    if (token === undefined) {
-        token = create_token(email);
-    } else {
-        token = req.headers['x-access-token'] || req.headers['authorization'];
-    }
+    
+    const token = create_token(email);
 
     model.findOne({email}, (err: Error, docs: Array<any>) => {
         if (err) return res.status(200).json({result: false, Error: err.message})
@@ -142,8 +143,6 @@ app.post('/auth/login', validate_email, validate_password, check_token, (req: Re
 });
 
 app.post('/auth/reset-password', validate_email, (req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
 
     const {email} = req.body;
 
@@ -177,8 +176,6 @@ app.post('/auth/reset-password', validate_email, (req: Request, res: Response) =
 });
 
 app.post('/auth/remove-user', check_token, validate_email, validate_password, (req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
 
     const {email} = req.body;
 
@@ -204,8 +201,6 @@ app.post('/auth/remove-user', check_token, validate_email, validate_password, (r
 });
 
 app.post('/add-event', check_token, ((req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
 
     const {email, title, timestamp, description} = req.body;
     const events = {title, timestamp, description};
@@ -221,8 +216,6 @@ app.post('/add-event', check_token, ((req: Request, res: Response) => {
 }));
 
 app.post('/remove-event', check_token, ((req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
 
     const {id} = req.body;
 
@@ -233,8 +226,6 @@ app.post('/remove-event', check_token, ((req: Request, res: Response) => {
 }));
 
 app.post('/get-events', check_token, ((req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
-    res.header('Access-Control-Allow-Origin', '*');
 
     const {email} = req.body;
 
@@ -248,5 +239,5 @@ app.post('/get-events', check_token, ((req: Request, res: Response) => {
 }));
 
 app.listen(PORT, () => {
-console.log(`Listening on localhost:${PORT}`)
+    console.log(`Listening on localhost:${PORT}`)
 });
