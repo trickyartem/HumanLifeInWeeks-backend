@@ -33,7 +33,12 @@ app.use(Bodyparser.urlencoded({extended: true}));
 
 app.post('/auth/me', (req: any, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
     let token = req.headers['x-access-token'] || req.headers['authorization'];
+
+    if (token.startsWith('Bearer ')) {
+        token = token.slice(7, token.length);
+    }
 
     if (token) {
         jwt.verify(token, config.secret, (err: Error, decoded: any) => {
@@ -41,7 +46,7 @@ app.post('/auth/me', (req: any, res: Response) => {
                 return res.json({
                     result: false,
                     message: 'Token is not valid',
-                    token: undefined
+                    token: null
                 });
             } else {
                 return res.json({
@@ -61,6 +66,8 @@ app.post('/auth/me', (req: any, res: Response) => {
 
 app.post('/auth/register', validate_email, validate_password, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {email, password} = req.body;
 
     const salt = bcrypt.genSaltSync(10);
@@ -96,7 +103,9 @@ app.post('/auth/register', validate_email, validate_password, (req: Request, res
 });
 
 app.post('/auth/login', validate_email, validate_password, check_token, (req: Request, res: Response) => {
-    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {email, password} = req.body;
 
     let token = req.headers['x-access-token'] || req.headers['authorization'];
@@ -134,6 +143,8 @@ app.post('/auth/login', validate_email, validate_password, check_token, (req: Re
 
 app.post('/auth/reset-password', validate_email, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {email} = req.body;
 
     model.findOne({email}, (err: Error, docs: any[]) => {
@@ -167,6 +178,8 @@ app.post('/auth/reset-password', validate_email, (req: Request, res: Response) =
 
 app.post('/auth/remove-user', check_token, validate_email, validate_password, (req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {email} = req.body;
 
     model.findOne({email}, (err: Error, docs: Array<Object>) => {
@@ -192,6 +205,8 @@ app.post('/auth/remove-user', check_token, validate_email, validate_password, (r
 
 app.post('/add-event', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {email, title, timestamp, description} = req.body;
     const events = {title, timestamp, description};
 
@@ -207,6 +222,8 @@ app.post('/add-event', check_token, ((req: Request, res: Response) => {
 
 app.post('/remove-event', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {id} = req.body;
 
     model.findOneAndUpdate({"events._id": {$in: id}}, {$pull: {events: {_id: id}}}, (err: Error, docs: any) => {
@@ -217,6 +234,8 @@ app.post('/remove-event', check_token, ((req: Request, res: Response) => {
 
 app.post('/get-events', check_token, ((req: Request, res: Response) => {
     res.setHeader('Content-Type', 'application/json');
+    res.header('Access-Control-Allow-Origin', '*');
+
     const {email} = req.body;
 
     model.findOne({email}, (err: Error, docs: any) => {
