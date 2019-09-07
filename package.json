@@ -1,0 +1,46 @@
+{
+  "name": "human_life_in_weeks_backend",
+  "version": "1.0.0",
+  "description": "I made server with authentication for HumanLifeInWeeks cite",
+  "main": "index.js",
+  "scripts": {
+    "start": "npm run build:live",
+    "build": "tsc -p .",
+    "mongo": "sudo service mongod start",
+    "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trickyartem/HumanLifeInWeeks-backend.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/trickyartem/HumanLifeInWeeks-backend/issues"
+  },
+  "homepage": "https://github.com/trickyartem/HumanLifeInWeeks-backend#readme",
+  "dependencies": {
+    "bcrypt": "^3.0.6",
+    "body-parser": "^1.19.0",
+    "dotenv": "^8.1.0",
+    "express": "^4.17.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongodb": "^3.3.1",
+    "mongoose": "^5.6.10",
+    "nodemailer": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^12.7.2",
+    "@types/express": "^4.17.1",
+    "@types/bcrypt": "^3.0.0",
+    "@types/body-parser": "^1.17.1",
+    "@types/nedb": "^1.8.8",
+    "@types/nodemailer": "^6.2.1",
+    "@types/mongoose": "^5.5.13",
+    "@types/jsonwebtoken": "^8.3.3",
+    "nodemon": "^1.19.1",
+    "ts-node": "^8.3.0",
+    "typescript": "^3.5.3"
+  }
+}
