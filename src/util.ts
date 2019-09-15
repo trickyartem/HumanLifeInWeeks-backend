@@ -2,8 +2,8 @@ import {Request, Response} from "express-serve-static-core";
 import {html_text} from "./messages";
 import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
-import {config} from './config';
 import jwt from 'jsonwebtoken'
+import {config} from './config';
 
 const dotenv = require('dotenv').config({path: '.' + '/.env'});
 

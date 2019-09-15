@@ -13,6 +13,11 @@ db.on('error', (error: Error) => console.log(error));
 db.once('open', () => console.log('Connected to Mongoose'));
 
 const subSchema: Schema = new mongoose.Schema({
+    bornDate: {
+        type: String,
+        required: true,
+    },
+
     email: {
         type: String,
         required: true,
@@ -21,8 +26,7 @@ const subSchema: Schema = new mongoose.Schema({
 
     password: {
         type: String,
-        required: true,
-        unique: true
+        required: true
     },
 
     events: [{

@@ -1,6 +1,6 @@
 # HumanLifeInWeeks-backend
 
-I made server with authentication for HumanLifeInWeeks cite 
+This is the REST API for HumanLifeInWeeks
 
 ## Installation
 
@@ -13,31 +13,143 @@ Copy and paste this command
 
 Ubuntu: 
 ``` 
-npm install
-npm run mongo
-npm start
+    npm install
+```
+to run production version run
+```
+    npm run build
+```
+to run live version run
+```
+    npm start
 ```
 
+
 ## Methods 
-"/auth/register" - post request that takes {email, password} as parameters and returns auth jwt token
+"/auth/register" - post request that takes 
+``` json
+params: {
+    "email": "email",
+    "password": "password"
+}
+``` 
+as parameters and returns
+```JSMIN
+{
+    "status": <message> // message which tells you what happend
+    "result": <boolean> // true if all is good, false if something goes wrong
+    "token": "token"
+    "user_id": "user_id" // you can find the user by this id in database
+}
+```
 
 ----
-"/auth/me" - post request that takes {token} as header and return {token} (if token is valid) and {token: undefined} (if token is not valid)
+"/auth/me" - get request that takes
+authorization header: ```"authorization": "Bearer <token>"```
+and returns 
+ ```json
+ {
+     "token": "token"
+ }
+ ```
+if it's valid and 
+  ```json
+  {
+      "token": null
+  }
+  ```
+if token is not valid
 
 ----
-"/auth/login" - post request takes {email, password} as parameters and {token} as header and returns nothing
+"/auth/login" - get request takes 
+``` json
+{
+    "email": "email",
+    "password": "password"
+}
+``` 
+as parameters and returns 
+  ```JSMIN
+ {
+     "result": <boolean>,
+     "email": "email",
+     status: <message>,
+     "token": "token",
+     "user_id": "user_id"
+ }
+  ```
+
 
 ----
-"/auth/reset-password" - post request takes {email} as parameters and {token} as header and sends message to email with new password
+"/auth/reset-password" - put request takes
+authorization header: ```"authorization": "Bearer <token>"```
+ ``` json
+ {
+     "email": "email",
+ }
+ ``` 
+and sends message to email with new password
 
 ----
-"/auth/remove-user" - post request takes {email, password} as parameters and {token} as header and deletes user form data base
+"/auth/remove-user" - delete request takes
+authorization header: ```"authorization": "Bearer <token>"```
+ ``` json
+ {
+     "email": "email",
+     "password": "password"
+ }
+ ``` 
+ and deletes user form data base
 
 ----
-"/add-event" - post request takes {title, timestamp, description} and {token} as header and returns id of an event
+"/add-event" - post request takes
+authorization header: ```"authorization": "Bearer <token>"```
+ ```json
+{
+      "title": "title",
+      "timestamp": "timestamp",
+      "description": "description"
+}
+```
+and returns
+```JSMIN
+{
+    "result": <boolean>,
+    "status": <message>,
+    "id": "id" // of an event
+}
+``` 
 
 ----
-"/remove-event" - post request takes {id of an event} and {token} as header and removes event from data base
+"/remove-event" - delete request takes
+authorization header: ```"authorization": "Bearer <token>"```
+ ```JSMin
+{
+    "id": "id" // id of event
+}
+```
+ and returns 
+ ```JSMIN
+{
+    "result": <boolean>,
+    "status": <message>
+}
+```
+ removes event from data base
 
 ----
-"/get-events" - post request takes {email} and {token} as header and returns all events by this user
+"/get-events" - get request takes 
+authorization header: ```"authorization": "Bearer <token>"```
+```json
+{
+    "email": "email"
+}
+```
+and returns 
+```JSMIN
+{
+    "events": [
+        {event}
+    ]
+}
+```

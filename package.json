@@ -4,11 +4,9 @@
   "description": "I made server with authentication for HumanLifeInWeeks cite",
   "main": "index.js",
   "scripts": {
-    "start": "npm run build:live",
-    "build": "tsc -p .",
-    "dev": "ts-node-dev --respawn --transpileOnly ./test.ts",
-    "prod": "tsc && node ./test.ts",
-    "mongo": "sudo service mongod start",
+    "start": "npm run mongo && npm run build:live",
+    "build": "tsc && npm run mongo && node ./prod/index.js",
+    "mongo": "service mongod start",
     "build:live": "nodemon --watch 'src/**/*.ts' --exec 'ts-node' src/index.ts"
   },
   "repository": {
@@ -31,21 +29,19 @@
     "jsonwebtoken": "^8.5.1",
     "mongodb": "^3.3.1",
     "mongoose": "^5.6.10",
-    "nodemailer": "^6.3.0",
-    "ts-node-dev": "^1.0.0-pre.42",
-    "webpack-node-externals": "^1.7.2"
+    "nodemailer": "^6.3.0"
   },
   "devDependencies": {
-    "@types/node": "^12.7.2",
-    "@types/express": "^4.17.1",
     "@types/bcrypt": "^3.0.0",
     "@types/body-parser": "^1.17.1",
-    "@types/nedb": "^1.8.8",
-    "@types/nodemailer": "^6.2.1",
-    "@types/mongoose": "^5.5.13",
+    "@types/express": "^4.17.1",
     "@types/jsonwebtoken": "^8.3.3",
+    "@types/mongoose": "^5.5.13",
+    "@types/node": "^12.7.2",
+    "@types/nodemailer": "^6.2.1",
     "nodemon": "^1.19.1",
     "ts-node": "^8.3.0",
-    "typescript": "^3.5.3"
+    "ts-node-dev": "^1.0.0-pre.42",
+    "typescript": "^3.6.2"
   }
 }
